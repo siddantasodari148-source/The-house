@@ -26,7 +26,7 @@ export default function Footer() {
           <div className="flex items-center gap-2 text-stone-400 text-[10px] font-bold uppercase tracking-widest">
             <MapPin size={14} /> Find the House
           </div>
-          <div className="h-48 rounded-3xl overflow-hidden grayscale contrast-125 border border-stone-800">
+          <div className="h-48 rounded-3xl overflow-hidden  border border-stone-800">
              <iframe 
               src="https://www.google.com/maps/place/The+house/@27.6832102,84.4682385,13.41z/data=!4m6!3m5!1s0x3994fb000b760fc9:0xccb08adaebe71bf3!8m2!3d27.6987839!4d84.4230369!16s%2Fg%2F11vrr81wcz?hl=en-IN&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoKLDEwMDc5MjA3M0gBUAM%3D"
             ></iframe>

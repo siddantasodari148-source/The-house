@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Camera, Plus, X } from 'lucide-react';
+import { ArrowLeft, Camera, Plus, X, Loader2 } from 'lucide-react'; // Added Loader2
 import StatusModal from '@/components/StatusModal';
 
 export default function AddItemPage() {
@@ -14,12 +14,14 @@ export default function AddItemPage() {
     fetchCats();
   }, [router]);
 
-  // ... keep existing state definitions ...
   const [categories, setCategories] = useState<any[]>([]);
   const [showCatModal, setShowCatModal] = useState(false);
   const [newCatName, setNewCatName] = useState('');
+  
   const [form, setForm] = useState({ name: '', price: '', desc: '', catId: '', type: 'permanent' });
   const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null); // Separate preview state
+  const [isCompressing, setIsCompressing] = useState(false); // Compression loading state
   const [modal, setModal] = useState({ open: false, msg: '', type: 'success' as 'success'|'error' });
 
   async function fetchCats() {
@@ -27,7 +29,88 @@ export default function AddItemPage() {
     setCategories(data || []);
   }
 
-  // ... keep addCategory and handleSubmit functions exactly as before ...
+  // --- NATIVE IMAGE COMPRESSOR UTILITY ---
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        img.src = event.target?.result as string;
+      };
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 1. Calculate new dimensions (Max 1000px width/height to keep size low)
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // 2. Draw image on canvas
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // 3. Compress to JPEG at 70% quality
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              // Create a new File object with the compressed blob
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              reject(new Error('Compression failed'));
+            }
+          },
+          'image/jpeg',
+          0.7 // Quality (0.1 to 1.0)
+        );
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const originalFile = e.target.files[0];
+      
+      // Show preview immediately
+      setImagePreview(URL.createObjectURL(originalFile));
+      setIsCompressing(true);
+
+      try {
+        const compressedFile = await compressImage(originalFile);
+        setImage(compressedFile); // Store the smaller file
+      } catch (error) {
+        console.error("Compression error:", error);
+        alert("Could not compress image. Using original.");
+        setImage(originalFile);
+      } finally {
+        setIsCompressing(false);
+      }
+    }
+  };
+
   async function addCategory() {
       if (!newCatName) return;
       const { error } = await supabase.from('categories').insert({ name: newCatName });
@@ -43,8 +126,14 @@ export default function AddItemPage() {
         setModal({ open: true, msg: 'Please fill all fields and upload an image.', type: 'error' });
         return;
       }
+
+      if (isCompressing) {
+        setModal({ open: true, msg: 'Please wait for image compression to finish.', type: 'error' });
+        return;
+      }
   
       try {
+        // Upload the COMPRESSED image
         const fileName = `${Date.now()}-${image.name}`;
         const { error: upErr } = await supabase.storage.from('menu-images').upload(fileName, image);
         if (upErr) throw upErr;
@@ -82,18 +171,27 @@ export default function AddItemPage() {
       <div className="space-y-4">
         {/* Image Picker */}
         <div className="w-full h-40 bg-white border-2 border-dashed border-stone-300 rounded-3xl flex items-center justify-center overflow-hidden relative group hover:border-[#C6A87C] transition-colors">
-          {image ? (
-            <img src={URL.createObjectURL(image)} className="w-full h-full object-cover" />
+          {imagePreview ? (
+            <>
+              <img src={imagePreview} className={`w-full h-full object-cover ${isCompressing ? 'opacity-50 blur-sm' : ''}`} />
+              {/* Compression Indicator */}
+              {isCompressing && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                  <Loader2 className="animate-spin text-stone-800 mb-1" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-stone-800 bg-white/80 px-2 py-1 rounded-full">Compressing...</span>
+                </div>
+              )}
+            </>
           ) : (
             <label className="flex flex-col items-center cursor-pointer p-10 w-full h-full justify-center">
               <Camera className="text-stone-300 mb-2 group-hover:text-[#C6A87C]" />
               <span className="text-[10px] uppercase font-bold text-stone-400 group-hover:text-[#C6A87C]">Tap to upload</span>
-              <input type="file" className="hidden" onChange={e => setImage(e.target.files?.[0] || null)} />
+              {/* Changed onChange to handleImageSelect */}
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
             </label>
           )}
         </div>
 
-        {/* Inputs use the .input-field class from globals.css which forces text color */}
         <input placeholder="Item Name" className="input-field" onChange={e => setForm({...form, name: e.target.value})} />
         
         <div className="flex gap-2">
@@ -116,8 +214,12 @@ export default function AddItemPage() {
 
         <textarea placeholder="Description" className="input-field h-24 pt-4 resize-none" onChange={e => setForm({...form, desc: e.target.value})} />
 
-        <button onClick={handleSubmit} className="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold uppercase tracking-widest mt-4 shadow-xl active:scale-95 transition-transform">
-          Save Item
+        <button 
+          onClick={handleSubmit} 
+          disabled={isCompressing} // Disable save while compressing
+          className={`w-full py-5 rounded-2xl font-bold uppercase tracking-widest mt-4 shadow-xl transition-transform ${isCompressing ? 'bg-stone-400 cursor-not-allowed' : 'bg-stone-900 text-white active:scale-95'}`}
+        >
+          {isCompressing ? 'Compressing Image...' : 'Save Item'}
         </button>
       </div>
 

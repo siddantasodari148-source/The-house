@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Utensils, Star } from 'lucide-react';
-import MenuList from './MenuList'; // The Visual Component
+import MenuList from './MenuList';
 
 export default function DynamicMenu() {
   const [activeTab, setActiveTab] = useState<'permanent' | 'daily'>('permanent');
@@ -25,18 +25,17 @@ export default function DynamicMenu() {
     </div>
   );
 
-  // Logic: Filter items based on the Active Tab
   const filteredItems = data.items.filter(i => activeTab === 'permanent' ? i.is_permanent : i.is_daily);
 
   return (
     <div className="w-full relative z-20">
       
-      {/* --- Floating Tab Switcher --- */}
-      <div className="flex justify-center mb-8 sticky top-4 z-50">
-        <div className="bg-[#1A1A1A]/90 backdrop-blur border border-stone-800 p-1.5 rounded-full flex shadow-2xl">
+      {/* Floating Tab Switcher */}
+      <div className="flex justify-center mb-6 sticky top-4 z-50 px-4">
+        <div className="bg-[#1A1A1A]/95 backdrop-blur border border-stone-800 p-1.5 rounded-full flex shadow-2xl w-full max-w-sm">
           <button
             onClick={() => setActiveTab('permanent')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
               activeTab === 'permanent' ? 'bg-[#F4F1EA] text-[#1A1A1A] shadow-md' : 'text-stone-400 hover:text-white'
             }`}
           >
@@ -44,7 +43,7 @@ export default function DynamicMenu() {
           </button>
           <button
             onClick={() => setActiveTab('daily')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
               activeTab === 'daily' ? 'bg-[#F4F1EA] text-[#1A1A1A] shadow-md' : 'text-stone-400 hover:text-white'
             }`}
           >
@@ -53,7 +52,6 @@ export default function DynamicMenu() {
         </div>
       </div>
 
-      {/* --- The Visual Menu Component --- */}
       <MenuList categories={data.categories} items={filteredItems} isDaily={activeTab === 'daily'} />
       
     </div>
