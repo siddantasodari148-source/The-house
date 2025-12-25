@@ -75,7 +75,7 @@ export default function AdminDashboard() {
       <div className="p-4 space-y-3 mt-2">
         {items.map(item => (
           <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-[#E5E0D8] flex items-center gap-3">
-            <img src={item.image_url || '/placeholder.png'} className="w-14 h-14 rounded-full object-cover border border-stone-100 bg-stone-100" />
+            <img src={item.image_url || '../thehouse.png'} className="w-14 h-14 rounded-full object-cover border border-stone-100 bg-stone-100" />
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sm truncate uppercase">{item.name}</h3>
               <p className="text-xs text-stone-500 font-bold">Rs.{item.price}</p>

@@ -11,10 +11,39 @@ export default function DynamicMenu() {
 
   useEffect(() => {
     async function getMenu() {
-      const { data: categories } = await supabase.from('categories').select('*').order('display_order');
-      const { data: items } = await supabase.from('menu_items').select('*').order('name');
-      setData({ categories: categories || [], items: items || [] });
-      setLoading(false);
+      // --- 1. OFFLINE FIRST: Try to load from LocalStorage immediately ---
+      try {
+        const cachedData = localStorage.getItem('house_menu_cache');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          setData(parsed);
+          setLoading(false); // Show cached menu instantly
+        }
+      } catch (e) {
+        console.error("Cache read error", e);
+      }
+
+      // --- 2. NETWORK STRATEGY: Try to fetch fresh data ---
+      // If online, this will overwrite the cache with new prices/items
+      try {
+        const { data: categories, error: catError } = await supabase.from('categories').select('*').order('display_order');
+        const { data: items, error: itemError } = await supabase.from('menu_items').select('*').order('name');
+
+        if (!catError && !itemError && categories && items) {
+          const freshData = { categories, items };
+          
+          // Update State
+          setData(freshData);
+          
+          // Save to LocalStorage for next time (Offline Backup)
+          localStorage.setItem('house_menu_cache', JSON.stringify(freshData));
+        }
+      } catch (err) {
+        // If fetch fails (offline), we simply stay on the cached data we loaded in step 1.
+        console.log("Network request failed, using offline cache.");
+      } finally {
+        setLoading(false);
+      }
     }
     getMenu();
   }, []);
@@ -29,7 +58,6 @@ export default function DynamicMenu() {
 
   return (
     <div className="w-full relative z-20">
-      
       {/* Floating Tab Switcher */}
       <div className="flex justify-center mb-6 sticky top-4 z-50 px-4">
         <div className="bg-[#1A1A1A]/95 backdrop-blur border border-stone-800 p-1.5 rounded-full flex shadow-2xl w-full max-w-sm">
@@ -53,7 +81,6 @@ export default function DynamicMenu() {
       </div>
 
       <MenuList categories={data.categories} items={filteredItems} isDaily={activeTab === 'daily'} />
-      
     </div>
   );
 }
