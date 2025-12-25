@@ -1,7 +1,11 @@
 // components/Footer.tsx
 import { Instagram, Facebook, MapPin, Star, ArrowUpRight } from 'lucide-react';
+import Image from 'next/image'; // Import Next.js Image component
 
 export default function Footer() {
+  // 1. The actual Google Maps Link (for navigation)
+  const mapLink = "https://www.google.com/maps/search/?api=1&query=The+House+Cafe+Narayangarh"; 
+
   return (
     <footer className="bg-stone-900 text-white mt-20 rounded-t-[3rem] px-8 pt-16 pb-12">
       <div className="max-w-md mx-auto space-y-12">
@@ -13,7 +17,8 @@ export default function Footer() {
           </div>
           <h2 className="text-xl font-serif italic">Best coffee and vibes in the city!</h2>
           <a 
-            href="https://www.google.com/search?q=the+house+caffee&oq=the+&gs_lcrp=EgZjaHJvbWUqBggAEEUYOzIGCAAQRRg7MgYIARBFGDkyBggCEEUYOzIGCAMQRRg7MgYIBBBFGD0yBggFEEUYPTIGCAYQRRg9MgYIBxBFGEHSAQgyMDU1ajBqN6gCCLACAfEFzE7QGDoaehPxBcxO0Bg6GnoT&sourceid=chrome&ie=UTF-8&lqi=Cg50aGUgaG91c2UgY2FmZSIDiAEBSP7ag_TeuoCACFoaEAAQARACGAAYASIOdGhlIGhvdXNlIGNhZmWSARFicnVuY2hfcmVzdGF1cmFudJoBJENoZERTVWhOTUc5blMwVkpRMEZuU1VSaWJIQXpkWFIzUlJBQvoBBAgAEC0#lkt=LocalPoiReviews&rlimm=14749441452503669747&lrd=0x3994fb000b760fc9:0xccb08adaebe71bf3,3,,,," // Dynamic link here
+             // Use your actual review link here
+            href="https://www.google.com/search?q=the+house+caffee#lkt=LocalPoiReviews"
             target="_blank"
             className="inline-flex items-center gap-2 bg-white text-stone-900 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest active:scale-95 transition-transform"
           >
@@ -21,16 +26,37 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* Map Section */}
+        {/* --- OFFLINE-READY MAP SECTION --- */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-stone-400 text-[10px] font-bold uppercase tracking-widest">
             <MapPin size={14} /> Find the House
           </div>
-          <div className="h-48 rounded-3xl overflow-hidden  border border-stone-800">
-             <iframe 
-              src="https://www.google.com/maps/place/The+house/@27.6832102,84.4682385,13.41z/data=!4m6!3m5!1s0x3994fb000b760fc9:0xccb08adaebe71bf3!8m2!3d27.6987839!4d84.4230369!16s%2Fg%2F11vrr81wcz?hl=en-IN&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoKLDEwMDc5MjA3M0gBUAM%3D"
-            ></iframe>
-          </div>
+          
+          <a 
+            href={mapLink} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block h-48 rounded-3xl overflow-hidden border border-stone-800 relative group"
+          >
+            {/* Using a Static Image ensures this works OFFLINE.
+               The PWA will cache 'map-offline.png' automatically.
+            */}
+            <div className="relative w-full h-full">
+               {/* Ensure you put 'map-offline.png' in your public folder! */}
+               <img 
+                 src="../map-offline.png" 
+                 alt="Location Map"
+                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+               />
+               
+               {/* Stylish Overlay */}
+               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                  <div className="bg-white/90 backdrop-blur text-stone-900 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg flex items-center gap-2">
+                    <MapPin size={14} /> Open Maps
+                  </div>
+               </div>
+            </div>
+          </a>
         </div>
 
         {/* Bottom Bar */}
